@@ -1,0 +1,1826 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>パネルしりとり 自習版</title>
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+  background: #f4f7fb;
+  color: #222;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.screen {
+  display: none;
+  min-height: 100vh;
+  padding: 8px 14px;
+}
+
+.screen.active {
+  display: block;
+}
+
+#gameScreen.time-on {
+  padding-left: 86px;
+}
+
+#gameScreen.hint-on {
+  padding-right: 86px;
+}
+
+.title-screen {
+  text-align: center;
+  padding-top: 62px;
+}
+
+.main-title {
+  font-size: 52px;
+  font-weight: 900;
+  color: #2457a6;
+  margin-bottom: 32px;
+}
+
+.sub-title {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 30px;
+  color: #0f8a4b;
+}
+
+.menu-button {
+  display: block;
+  width: min(440px, 90%);
+  margin: 18px auto;
+  padding: 22px;
+  font-size: 28px;
+  font-weight: 800;
+  border: none;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 6px 0 #c7d2e5;
+  color: #2457a6;
+}
+
+.menu-button:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #c7d2e5;
+}
+
+.mode-setting,
+.time-setting {
+  width: min(440px, 90%);
+  margin: 18px auto;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 6px 0 #c7d2e5;
+}
+
+.mode-button,
+.time-button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.mode-button {
+  background: #0f8a4b;
+  margin-bottom: 10px;
+}
+
+.mode-button:last-child {
+  margin-bottom: 0;
+}
+
+.time-button {
+  background: #8a5ad8;
+}
+
+.time-input-row {
+  margin-top: 12px;
+  font-size: 22px;
+  font-weight: 900;
+  color: #2457a6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.time-input-row input {
+  width: 96px;
+  padding: 8px;
+  border: 3px solid #c7d2e5;
+  border-radius: 12px;
+  font-size: 24px;
+  font-weight: 900;
+  text-align: center;
+}
+
+
+.game-wrap {
+  max-width: 1220px;
+  margin: 0 auto;
+}
+
+.info-box {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 8px 14px;
+  margin-bottom: 8px;
+  box-shadow: 0 3px 8px rgba(0,0,0,.08);
+}
+
+.top-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.top-info {
+  font-size: 25px;
+  font-weight: 900;
+  color: #2457a6;
+  line-height: 1.25;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-message {
+  color: #d84040;
+  font-weight: 900;
+  text-shadow: none;
+}
+
+.player-turn {
+  min-height: 32px;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.player-turn.p1 {
+  color: #d84040;
+  text-align: left;
+}
+
+.player-turn.p2 {
+  color: #1f70d1;
+  text-align: right;
+}
+
+.timer-box {
+  display: none;
+  position: fixed;
+  left: 8px;
+  top: 86px;
+  z-index: 40;
+  width: 70px;
+  padding: 10px 6px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 4px 0 #c7d2e5;
+  text-align: center;
+  color: #2457a6;
+  font-weight: 900;
+}
+
+.timer-box.open {
+  display: block;
+}
+
+.timer-label {
+  font-size: 16px;
+  line-height: 1.1;
+}
+
+.timer-number {
+  font-size: 36px;
+  line-height: 1.1;
+  color: #d84040;
+}
+
+.timer-sec {
+  font-size: 16px;
+  line-height: 1.1;
+}
+
+.hint-button {
+  display: none;
+  position: fixed;
+  right: 8px;
+  top: 110px;
+  z-index: 45;
+  width: 72px;
+  height: 72px;
+  border: none;
+  border-radius: 18px;
+  background: #ffcc00;
+  color: #222;
+  font-size: 20px;
+  font-weight: 900;
+  box-shadow: 0 4px 0 #c49b00;
+}
+
+.hint-button.open {
+  display: block;
+}
+
+.hint-button:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #c49b00;
+}
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+#gameScreen.easy-on .panel-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.panel {
+  min-height: 120px;
+  border: none;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: 0 4px 0 #c7d2e5;
+  font-size: 21px;
+  font-weight: 900;
+  color: #222;
+  position: relative;
+  overflow: hidden;
+  padding: 5px;
+}
+
+#gameScreen.easy-on .panel {
+  min-height: 120px;
+}
+
+.panel:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #c7d2e5;
+}
+
+.panel-img {
+  width: 100%;
+  height: 86px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 4px;
+  pointer-events: none;
+}
+
+#gameScreen.easy-on .panel-img {
+  height: 86px;
+}
+
+.panel-label {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.1;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel.label-off {
+  padding: 5px;
+}
+
+.panel.label-off .panel-img {
+  height: 108px;
+  margin-bottom: 0;
+}
+
+#gameScreen.easy-on .panel.label-off .panel-img {
+  height: 108px;
+}
+
+.panel.label-off .panel-label {
+  display: none;
+}
+
+.panel.selected {
+  outline: 6px solid #ffcc00;
+  outline-offset: 3px;
+  z-index: 2;
+}
+
+.panel.roulette-lock {
+  pointer-events: none;
+}
+
+.panel.roulette-selected {
+  outline: 6px solid #ffcc00;
+  outline-offset: 3px;
+  z-index: 3;
+  animation: roulettePulse .18s infinite alternate;
+}
+
+@keyframes roulettePulse {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.04);
+  }
+}
+
+.panel.roulette-decided {
+  outline: 7px solid #ffcc00;
+  outline-offset: 4px;
+  z-index: 4;
+}
+
+.panel.used {
+  background: #111;
+  color: #111;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.panel.used .panel-img,
+.panel.used .panel-label {
+  visibility: hidden;
+}
+
+.panel.used.selected {
+  outline: 6px solid #ffcc00;
+  outline-offset: 3px;
+}
+
+.wrong-mark {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 76px;
+  font-weight: 900;
+  color: #e60012;
+  text-shadow:
+    3px 3px 0 #fff,
+    -3px 3px 0 #fff,
+    3px -3px 0 #fff,
+    -3px -3px 0 #fff;
+  pointer-events: none;
+  animation: wrongPop .5s ease-out forwards;
+}
+
+@keyframes wrongPop {
+  0% {
+    transform: scale(.4);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.controls {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.control-button {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 8px;
+  border: none;
+  border-radius: 12px;
+  background: #2457a6;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.control-button.gray {
+  background: #555;
+}
+
+.control-button.debug {
+  background: #0f8a4b;
+}
+
+.control-button.label-toggle {
+  background: #d45f00;
+}
+
+.reading-box {
+  display: none;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px 22px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+
+.reading-box.open {
+  display: block;
+}
+
+.reading-title {
+  font-size: 24px;
+  font-weight: 900;
+  color: #0f8a4b;
+  margin-bottom: 12px;
+}
+
+.chain-debug {
+  font-size: 18px;
+  line-height: 1.7;
+  background: #f1f8f3;
+  border: 2px solid #cde8d3;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.reading-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.reading-card {
+  border: 2px solid #d9e3f2;
+  border-radius: 14px;
+  padding: 12px;
+  background: #fbfdff;
+}
+
+.reading-card.used-reading {
+  background: #eeeeee;
+  color: #555;
+}
+
+.reading-card.selected-reading {
+  border-color: #ffcc00;
+  box-shadow: 0 0 0 3px rgba(255, 204, 0, .35);
+}
+
+.reading-card-title {
+  font-size: 22px;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.used-label {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 14px;
+}
+
+.selected-label {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #ffcc00;
+  color: #222;
+  font-size: 14px;
+}
+
+.reading-line {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.normal-word {
+  color: #2457a6;
+  font-weight: 800;
+}
+
+.hidden-word {
+  color: #d45f00;
+  font-weight: 800;
+}
+
+.answer-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.2);
+}
+
+.answer-modal.open {
+  display: flex;
+}
+
+.answer-window {
+  min-width: min(620px, 88vw);
+  max-width: 92vw;
+  border-radius: 24px;
+  padding: 34px 28px;
+  text-align: center;
+  box-shadow: 0 10px 0 rgba(0,0,0,.18);
+  border: 6px solid #ffffff;
+}
+
+.answer-window.normal {
+  background: #1f70d1;
+  color: #ffffff;
+}
+
+.answer-window.hidden {
+  background: #ffd84d;
+  color: #222;
+}
+
+.answer-window.end {
+  background: #d84040;
+  color: #ffffff;
+}
+
+.answer-window.hint {
+  background: #ffcc00;
+  color: #222;
+}
+
+.answer-word {
+  font-size: 54px;
+  font-weight: 900;
+  line-height: 1.25;
+  margin-bottom: 16px;
+}
+
+.answer-window.end .answer-word,
+.answer-window.hint .answer-word {
+  font-size: 42px;
+  margin-bottom: 0;
+}
+
+.answer-result {
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.answer-note {
+  margin-top: 18px;
+  font-size: 18px;
+  font-weight: 700;
+  opacity: .85;
+}
+
+.result-box {
+  max-width: 850px;
+  margin: 70px auto 0;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 32px;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,.1);
+}
+
+.result-title {
+  font-size: 42px;
+  font-weight: 900;
+  color: #2457a6;
+  margin-bottom: 24px;
+}
+
+.result-text {
+  font-size: 28px;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.result-section-title {
+  font-size: 30px;
+  font-weight: 900;
+  color: #2457a6;
+  margin-bottom: 14px;
+}
+
+.word-history {
+  font-size: 26px;
+  line-height: 1.8;
+  word-break: keep-all;
+}
+
+.howto {
+  max-width: 850px;
+  margin: 40px auto;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.1);
+}
+
+.howto h2 {
+  font-size: 34px;
+  color: #2457a6;
+}
+
+.howto p,
+.howto li {
+  font-size: 22px;
+  line-height: 1.8;
+}
+
+@media (max-width: 860px) {
+  .screen {
+    padding: 10px;
+  }
+
+  #gameScreen.time-on {
+    padding-left: 78px;
+  }
+
+  #gameScreen.hint-on {
+    padding-right: 78px;
+  }
+
+  .main-title {
+    font-size: 36px;
+  }
+
+  .panel-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .panel {
+    min-height: 104px;
+    font-size: 19px;
+  }
+
+  .panel-img {
+    height: 70px;
+  }
+
+  .panel.label-off .panel-img {
+    height: 92px;
+  }
+
+  #gameScreen.easy-on .panel {
+    min-height: 104px;
+  }
+
+  #gameScreen.easy-on .panel.label-off .panel-img {
+    height: 92px;
+  }
+
+  .top-row {
+    grid-template-columns: 1fr;
+  }
+
+  .top-info {
+    font-size: 20px;
+  }
+
+  .player-turn {
+    font-size: 16px;
+  }
+
+  .timer-box {
+    top: 82px;
+    width: 64px;
+  }
+
+  .timer-number {
+    font-size: 30px;
+  }
+
+  .hint-button {
+    top: 100px;
+    width: 64px;
+    height: 64px;
+    font-size: 18px;
+  }
+
+  .reading-list {
+    grid-template-columns: 1fr;
+  }
+
+  .answer-word {
+    font-size: 42px;
+  }
+
+  .answer-result {
+    font-size: 25px;
+  }
+
+  .answer-window.end .answer-word,
+  .answer-window.hint .answer-word {
+    font-size: 34px;
+  }
+}
+</style>
+</head>
+<body>
+
+<section id="titleScreen" class="screen active title-screen">
+  <div class="main-title">パネルしりとり<br><span class="sub-title">自習版</span></div>
+
+  <button class="menu-button" onclick="startGame('solo')">はじめる</button>
+  <div class="mode-setting">
+    <button id="hintModeButton" class="mode-button" onclick="toggleHintMode()">ヒントモード：OFF</button>
+  </div>
+
+  <div class="time-setting">
+    <button id="timeModeButton" class="time-button" onclick="toggleTimeLimitMode()">せいげんじかん：OFF</button>
+    <div class="time-input-row">
+      <span>じかん</span>
+      <input id="timeLimitInput" type="number" min="1" max="999" value="60" onchange="updateTimeLimitSeconds()">
+      <span>びょう</span>
+    </div>
+  </div>
+
+  <button class="menu-button" onclick="showHowto()">あそびかた</button>
+
+</section>
+
+<section id="howtoScreen" class="screen">
+  <div class="howto">
+    <h2>あそびかた</h2>
+    <p>パネルでしりとりをします。</p>
+    <ul>
+      <li>最初の1枚は、ルーレットで自動で選ばれます。</li>
+      <li>2枚目からは、前の言葉の最後の文字から始まるパネルを選びます。</li>
+      <li>1つのパネルには、見えている言葉以外の「裏読み」が入っていることがあります。</li>
+      <li>正解したパネルは黒くなり、もう使えません。</li>
+      <li>「ー」で終わる言葉は、1つ前の文字で続けます。</li>
+      <li>「ん」で終わったらおしまいです。</li>
+      <li>不正解のときは、パネルに×が出ます。負けにはなりません。</li>
+      <li>この自習版では、いつも15枚のパネルで遊びます。</li>
+      <li>「パネル名」ボタンで、パネルの名前を表示したり隠したりできます。</li>
+      <li>ヒントモードでは、右側のヒントボタンで次の言葉を確認できます。</li>
+      <li>せいげんじかんモードでは、間違えると2秒へります。</li>
+      <li>せいげんじかんモードでは、正解すると時間が元に戻ります。</li>
+    </ul>
+
+    <button class="menu-button" onclick="showTitle()">タイトルへ</button>
+  </div>
+</section>
+
+<section id="gameScreen" class="screen">
+  <div id="timerBox" class="timer-box">
+    <div class="timer-label">のこり</div>
+    <div id="timerNumber" class="timer-number">60</div>
+    <div class="timer-sec">びょう</div>
+  </div>
+
+  <button id="hintButton" class="hint-button" onclick="showHint()">ヒント</button>
+
+  <div class="game-wrap">
+
+    <div class="info-box">
+      <div class="top-row">
+        <div id="topInfo" class="top-info">まえのことば：なし　<span class="search-message">つぎは「」から</span></div>
+      </div>
+    </div>
+
+    <div id="panelGrid" class="panel-grid"></div>
+
+    <div class="controls">
+      <button id="labelToggleButton" class="control-button label-toggle" onclick="togglePanelLabels()">パネル名：OFF</button>
+      <button class="control-button" onclick="restartGame()">やりなおし</button>
+      <button class="control-button gray" onclick="showTitle()">タイトルへ</button>
+    </div>
+
+  </div>
+</section>
+
+<section id="resultScreen" class="screen">
+  <div class="result-box">
+    <div id="resultTitle" class="result-title">つなげた数：0</div>
+    <div id="resultText" class="result-text"></div>
+    <button class="menu-button" onclick="restartGame()">もういちど</button>
+    <button class="menu-button" onclick="showTitle()">タイトルへ</button>
+  </div>
+</section>
+
+<div id="answerModal" class="answer-modal" onclick="hideAnswerModal()">
+  <div id="answerWindow" class="answer-window normal">
+    <div id="answerWord" class="answer-word">「よみかた」</div>
+    <div id="answerResult" class="answer-result search-message">つぎは「こ」から</div>
+    <div class="answer-note">タップでとじる</div>
+  </div>
+</div>
+
+<script>
+function panel(num, label, normal, hidden = []) {
+  const id = String(num).padStart(3, "0");
+
+  return {
+    id,
+    label,
+    image: `images/${id}.webp`,
+    words: [
+      { text: normal, hidden: false },
+      ...hidden.map(text => ({ text, hidden: true }))
+    ]
+  };
+}
+
+const ALL_PANELS = [
+  panel(1, "ねこ", "ねこ", ["にゃんこ","のらねこ"]),
+  panel(2, "こま", "こま"),
+  panel(3, "まくら", "まくら", ["くっしょん"]),
+  panel(4, "らっぱ", "らっぱ", ["とらんぺっと","きんかんがっき"]),
+  panel(5, "ぱんだ", "ぱんだ", ["じゃいあんとぱんだ"]),
+  panel(6, "だるま", "だるま",["えんぎもの"]),
+  panel(7, "ますかっと", "ますかっと", ["しろぶどう","あれきさんどりあ"]),
+  panel(8, "とまとじゅーす", "とまとじゅーす", ["やさいじゅーす","けんこういんりょう"]),
+  panel(9, "すいか", "すいか", ["なつのふうぶつし"]),
+  panel(10, "かさ", "かさ", ["あまがさ"]),
+
+  panel(11, "さる", "さる", ["ましら","えてこう"]),
+  panel(12, "るびー", "るびー", ["れっどだいやもんど"]),
+  panel(13, "びーだま", "びーだま", ["がらすだま"]),
+  panel(14, "まめ", "まめ", ["せつぶん","だいず"]),
+  panel(15, "めがね", "めがね", ["ろうがんきょう","だてめがね"]),
+  panel(16, "ねぎ", "ねぎ", ["ながねぎ"]),
+  panel(17, "ぎたー", "ぎたー", ["あこーすてぃっくぎたー","くらしっくぎたー"]),
+  panel(18, "たぬき", "たぬき", ["むじな"]),
+  panel(19, "きつね", "きつね", ["えきのこっくす","おいなりさま"]),
+  panel(20, "ねずみ", "ねずみ", ["まうす","らっと"]),
+
+  panel(21, "みかづき", "みかづき", ["つき","じょうげんのつき"]),
+  panel(22, "きりかぶ", "きりかぶ"),
+  panel(23, "ぶた", "ぶた", ["こぶた"]),
+  panel(24, "たこ", "たこ", ["うみのあくま","でびるふぃっしゅ"]),
+  panel(25, "こいぬ", "こいぬ", ["いぬのこども"]),
+  panel(26, "ぬりえ", "ぬりえ", ["せんが","しろくろまんが"]),
+  panel(27, "えんぴつ", "えんぴつ", ["ひっきようぐ","けしごむつきえんぴつ"]),
+  panel(28, "つみき", "つみき", ["ぶろっく"]),
+  panel(29, "きのこ", "きのこ", ["どくきのこ"]),
+  panel(30, "こおり", "こおり", ["ぶろっくあいす"]),
+
+  panel(31, "りんご", "りんご", ["あかりんご","ふじ","こうぎょく"]),
+  panel(32, "ごりら", "ごりら", ["もりのけんじゃ","まうんてんごりら"]),
+  panel(33, "らくだ", "らくだ", ["ひとこぶらくだ","さばくのふね"]),
+  panel(34, "だちょう", "だちょう"),
+  panel(35, "うし", "うし", ["にゅうぎゅう","ほるすたいん","ぎゅうにく"]),
+  panel(36, "しろ", "しろ",["てんしゅかく","せんごくじだい"]),
+  panel(37, "ろぼっと", "ろぼっと", ["ましーん","ひゅーまのいど","もびるすーつ","ばーちゃろいど","てむじん"]),
+  panel(38, "とけい", "とけい", ["かけどけい","じゅうじ"]),
+  panel(39, "いぬ", "いぬ", ["わんこ"]),
+  panel(40, "ぬの", "ぬの", ["たおる","ふとん"]),
+
+  panel(41, "のこぎり", "のこぎり",["かたば"]),
+  panel(42, "りゅう", "りゅう", ["どらごん","しぇんろん"]),
+  panel(43, "うま", "うま", ["さらぶれっど"]),
+  panel(44, "まつ", "まつ", ["き"]),
+  panel(45, "つき", "つき", ["まんげつ","じゅうごや","おつきみ"]),
+  panel(46, "きく", "きく", ["はな","ぶっか","たんぽぽ"]),
+  panel(47, "くつ", "くつ", ["うんどうぐつ","そとばき","すにーかー"]),
+  panel(48, "つくえ", "つくえ", ["べんきょうづくえ","きょうしつ"]),
+  panel(49, "えび", "えび",["くるまえび"]),
+  panel(50, "びわ", "びわ"),
+
+  panel(51, "わに", "わに", ["はちゅうるい","くろこだいる"]),
+  panel(52, "にじ", "にじ", ["れいんぼー","てんのゆみ"]),
+  panel(53, "じしゃく", "じしゃく", ["まぐねっと","ゆーじじしゃく"]),
+  panel(54, "くるま", "くるま", ["じどうしゃ","こんぱくとかー","よりんくどう"]),
+  panel(55, "まど", "まど", ["がらす"]),
+  panel(56, "どあ", "どあ", ["とびら","でいりぐち"]),
+  panel(57, "あひる", "あひる", ["かも"]),
+  panel(58, "るーぺ", "るーぺ", ["むしめがね","かくだいきょう"]),
+  panel(59, "ぺんき", "ぺんき", ["えのぐ","とりょう","あかぺんき"]),
+  panel(60, "きつつき", "きつつき", ["とり"]),
+
+  panel(61, "きもの", "きもの", ["わふく","ふりそで"]),
+  panel(62, "のり", "のり", ["やきのり"]),
+  panel(63, "りょうり", "りょうり", ["ちょうりじっしゅう", "やさいいため"]),
+  panel(64, "リス", "りす"),
+  panel(65, "すな", "すな", ["さきゅう"]),
+  panel(66, "なす", "なす",["あきなす"]),
+  panel(67, "すもう", "すもう", ["りきし","ぎょうじ","はっけよいのこった"]),
+  panel(68, "うちわ", "うちわ",["おしかつ"]),
+  panel(69, "わごむ", "わごむ",["からーわごむ","ごむばんど"]),
+  panel(70, "むぎ", "むぎ", ["こむぎ"]),
+
+  panel(71, "ぎゅうにゅう", "ぎゅうにゅう", ["みるく","のむよーぐると"]),
+  panel(72, "うでどけい", "うでどけい", ["とけい"]),
+  panel(73, "いす", "いす"),
+  panel(74, "すず", "すず", ["べる"]),
+  panel(75, "ずつう", "ずつう", ["へんずつう","たいちょうふりょう"]),
+  panel(76, "うさぎ", "うさぎ", ["こうさぎ"]),
+  panel(77, "ぎょうざ", "ぎょうざ", ["ちゅうかりょうり"]),
+  panel(78, "ざる", "ざる",["たけざる"]),
+  panel(79, "るーれっと", "るーれっと", ["じんせいげーむ"]),
+  panel(80, "とうふ", "とうふ", ["もめんどうふ"]),
+
+  panel(81, "ふみきり", "ふみきり", ["しゃだんき"]),
+  panel(82, "りゅっく", "りゅっく", ["かばん","ばっぐ"]),
+  panel(83, "くじら", "くじら", ["しろながすくじら"]),
+  panel(84, "らっこ", "らっこ"),
+  panel(85, "こけし", "こけし"),
+  panel(86, "しょうぎ", "しょうぎ", ["こま","ぼーどげーむ"]),
+  panel(87, "ぎんが", "ぎんが", ["うちゅう","わーむほーる"]),
+  panel(88, "がびょう", "がびょう", ["おしぴん"]),
+  panel(89, "うきわ", "うきわ", ["ふろーと"]),
+  panel(90, "わし", "わし", ["たか","とり"]),
+
+  panel(91, "ししまい", "ししまい",["やくばらい"]),
+  panel(92, "いか", "いか", ["するめ","だいおういか"]),
+  panel(93, "かもめ", "かもめ", ["うみねこ","とり"]),
+  panel(94, "めだか", "めだか", ["こざかな"]),
+  panel(95, "かた", "かた", ["みぎて"]),
+  panel(96, "たいこ", "たいこ", ["わだいこ","おおだいこ"]),
+  panel(97, "こーら", "こーら", ["たんさん","ぺぷし"]),
+  panel(98, "らじお", "らじお",["じゅしんき"]),
+  panel(99, "おにぎり", "おにぎり", ["にぎりめし"])
+];
+
+let activePanels = [];
+let answerChain = [];
+
+let gameState = {
+  mode: "solo",
+  currentPlayer: 1,
+  currentChar: null,
+  lastWord: null,
+  usedPanelIds: [],
+  selectedPanelId: null,
+  decidedPanelId: null,
+  count: 0,
+  history: [],
+  gameOver: false,
+  readingOpen: false,
+  rouletteRunning: false
+};
+
+let currentModeForRestart = "solo";
+let rouletteTimeoutId = null;
+let showPanelLabel = false;
+let pendingEndInfo = null;
+let answerModalMode = "answer";
+
+let timeLimitMode = false;
+let timeLimitSeconds = 60;
+let remainingTime = 60;
+let timerIntervalId = null;
+
+let easyMode = true;
+let hintMode = false;
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(screen => {
+    screen.classList.remove("active");
+  });
+  document.getElementById(id).classList.add("active");
+  updateLayoutFlags();
+}
+
+function showTitle() {
+  stopRouletteTimer();
+  stopTimerInterval();
+  closeAnswerModalImmediately();
+  showScreen("titleScreen");
+  updateTimeLimitControls();
+  updateModeControls();
+}
+
+function showHowto() {
+  stopRouletteTimer();
+  stopTimerInterval();
+  closeAnswerModalImmediately();
+  showScreen("howtoScreen");
+}
+
+function startGame(mode) {
+  stopRouletteTimer();
+  stopTimerInterval();
+  closeAnswerModalImmediately();
+  currentModeForRestart = mode;
+
+  updateTimeLimitSeconds();
+  remainingTime = timeLimitSeconds;
+
+  const panelCount = 15;
+  const chain = makeNormalChain(ALL_PANELS, panelCount);
+
+  if (!chain) {
+    alert("パネルセットを作れませんでした。パネルデータを見直してください。");
+    return;
+  }
+
+  answerChain = chain;
+  activePanels = shuffle([...chain]);
+
+  const firstPanel = answerChain[0];
+
+  gameState = {
+    mode: mode,
+    currentPlayer: 1,
+    currentChar: null,
+    lastWord: null,
+    usedPanelIds: [],
+    selectedPanelId: null,
+    decidedPanelId: null,
+    count: 0,
+    history: [],
+    gameOver: false,
+    readingOpen: false,
+    rouletteRunning: true
+  };
+
+  showScreen("gameScreen");
+  updateDisplay();
+  updateTimerDisplay();
+
+  if (timeLimitMode) {
+    startTimerInterval();
+  }
+
+  startFirstPanelRoulette(firstPanel);
+}
+
+function restartGame() {
+  startGame(currentModeForRestart);
+}
+
+function startFirstPanelRoulette(firstPanel) {
+  let step = 0;
+  let delay = 55;
+  const maxSteps = 34 + Math.floor(Math.random() * 12);
+
+  function moveFrame() {
+    step++;
+
+    if (step < maxSteps) {
+      const randomPanel = activePanels[Math.floor(Math.random() * activePanels.length)];
+      gameState.selectedPanelId = randomPanel.id;
+      updateDisplay();
+
+      if (step > maxSteps * 0.55) {
+        delay += 12;
+      }
+
+      rouletteTimeoutId = setTimeout(moveFrame, delay);
+    } else {
+      gameState.selectedPanelId = firstPanel.id;
+      gameState.decidedPanelId = firstPanel.id;
+      updateDisplay();
+
+      rouletteTimeoutId = setTimeout(() => {
+        decideFirstPanel(firstPanel);
+      }, 500);
+    }
+  }
+
+  moveFrame();
+}
+
+function decideFirstPanel(firstPanel) {
+  const firstWordObj = getNormalWord(firstPanel);
+  const firstWord = firstWordObj.text;
+  const next = getLastChar(firstWord);
+
+  gameState.currentChar = next;
+  gameState.lastWord = firstWord;
+  gameState.usedPanelIds = [firstPanel.id];
+  gameState.selectedPanelId = firstPanel.id;
+  gameState.decidedPanelId = firstPanel.id;
+  gameState.count = 1;
+  gameState.rouletteRunning = false;
+
+  gameState.history = [
+    {
+      player: 0,
+      panel: firstPanel.label,
+      word: firstWord,
+      hidden: false,
+      auto: true
+    }
+  ];
+
+  showAnswerModal(firstWord, false, `つぎは「${next}」から`);
+  updateDisplay();
+}
+
+function stopRouletteTimer() {
+  if (rouletteTimeoutId !== null) {
+    clearTimeout(rouletteTimeoutId);
+    rouletteTimeoutId = null;
+  }
+}
+
+function makeNormalChain(allPanels, length) {
+  const usable = allPanels.filter(panel => {
+    const normal = getNormalWord(panel);
+    if (!normal) return false;
+    return getLastChar(normal.text) !== "ん";
+  });
+
+  const startCandidates = shuffle([...usable]);
+
+  for (const start of startCandidates) {
+    const used = new Set([start.id]);
+    const chain = [start];
+
+    if (searchChain(chain, used, usable, length)) {
+      return chain;
+    }
+  }
+
+  return null;
+}
+
+function searchChain(chain, used, panels, targetLength) {
+  if (chain.length >= targetLength) {
+    return true;
+  }
+
+  const lastPanel = chain[chain.length - 1];
+  const lastWord = getNormalWord(lastPanel).text;
+  const needChar = getLastChar(lastWord);
+
+  const candidates = shuffle(
+    panels.filter(panel => {
+      if (used.has(panel.id)) return false;
+
+      const normal = getNormalWord(panel);
+      if (!normal) return false;
+
+      return getFirstChar(normal.text) === needChar;
+    })
+  );
+
+  for (const candidate of candidates) {
+    used.add(candidate.id);
+    chain.push(candidate);
+
+    if (searchChain(chain, used, panels, targetLength)) {
+      return true;
+    }
+
+    chain.pop();
+    used.delete(candidate.id);
+  }
+
+  return false;
+}
+
+function getNormalWord(panel) {
+  return panel.words.find(w => !w.hidden) || panel.words[0];
+}
+
+function renderPanels() {
+  const grid = document.getElementById("panelGrid");
+  grid.innerHTML = "";
+
+  activePanels.forEach(panel => {
+    const btn = document.createElement("button");
+    btn.className = "panel";
+    btn.dataset.panelId = panel.id;
+    btn.onclick = () => selectPanel(panel.id);
+
+    if (!showPanelLabel) {
+      btn.classList.add("label-off");
+    }
+
+    btn.innerHTML = `
+      <img class="panel-img" src="${panel.image}" alt="${panel.label}">
+      <div class="panel-label">${panel.label}</div>
+    `;
+
+    if (gameState.rouletteRunning) {
+      btn.classList.add("roulette-lock");
+    }
+
+    if (gameState.usedPanelIds.includes(panel.id)) {
+      btn.classList.add("used");
+    }
+
+    if (gameState.selectedPanelId === panel.id) {
+      btn.classList.add("selected");
+    }
+
+    if (gameState.rouletteRunning && gameState.selectedPanelId === panel.id) {
+      btn.classList.add("roulette-selected");
+    }
+
+    if (gameState.decidedPanelId === panel.id) {
+      btn.classList.add("roulette-decided");
+    }
+
+    grid.appendChild(btn);
+  });
+}
+
+function updateDisplay() {
+  const topInfo = document.getElementById("topInfo");
+  if (gameState.rouletteRunning) {
+    topInfo.textContent = "まえのことば：なし　さいしょの1まいをえらんでいます";
+  } else {
+    const last = gameState.lastWord ? gameState.lastWord : "なし";
+    topInfo.innerHTML = `まえのことば：${last}　<span class="search-message">つぎは「${gameState.currentChar}」から</span>`;
+  }
+
+  const labelButton = document.getElementById("labelToggleButton");
+  if (labelButton) {
+    labelButton.textContent = showPanelLabel ? "パネル名：ON" : "パネル名：OFF";
+  }
+
+  updateTimerDisplay();
+  updateLayoutFlags();
+
+  renderPanels();
+  renderReadingList();
+}
+
+function updateLayoutFlags() {
+  const gameScreen = document.getElementById("gameScreen");
+  const hintButton = document.getElementById("hintButton");
+
+  if (!gameScreen) return;
+
+  const activeGame = gameScreen.classList.contains("active");
+
+  if (easyMode && activeGame) {
+    gameScreen.classList.add("easy-on");
+  } else {
+    gameScreen.classList.remove("easy-on");
+  }
+
+  if (hintMode && activeGame) {
+    gameScreen.classList.add("hint-on");
+    if (hintButton) hintButton.classList.add("open");
+  } else {
+    gameScreen.classList.remove("hint-on");
+    if (hintButton) hintButton.classList.remove("open");
+  }
+}
+
+function selectPanel(panelId) {
+  if (gameState.gameOver) return;
+  if (gameState.rouletteRunning) return;
+
+  gameState.selectedPanelId = panelId;
+  gameState.decidedPanelId = null;
+
+  if (gameState.usedPanelIds.includes(panelId)) {
+    handleMissByPanelId(panelId);
+    return;
+  }
+
+  const panel = activePanels.find(p => p.id === panelId);
+  if (!panel) return;
+
+  const selectedWord = panel.words.find(w => getFirstChar(w.text) === gameState.currentChar);
+
+  if (!selectedWord) {
+    handleMiss(panel);
+    return;
+  }
+
+  handleCorrect(panel, selectedWord);
+}
+
+function handleCorrect(panel, wordObj) {
+  const word = wordObj.text;
+  const isHidden = wordObj.hidden;
+
+  gameState.usedPanelIds.push(panel.id);
+  gameState.selectedPanelId = panel.id;
+  gameState.lastWord = word;
+  gameState.count++;
+
+  gameState.history.push({
+    player: gameState.currentPlayer,
+    panel: panel.label,
+    word: word,
+    hidden: isHidden,
+    auto: false
+  });
+
+  const next = getLastChar(word);
+  gameState.currentChar = next;
+
+  if (timeLimitMode) {
+    remainingTime = timeLimitSeconds;
+    updateTimerDisplay();
+  }
+
+showAnswerModal(word, isHidden);
+
+if (gameState.usedPanelIds.length >= activePanels.length) {
+  pendingEndInfo = {
+    reason: "なんとまあ、パーフェクト！？<br>お、おそるべし……",
+    html: true
+  };
+  updateDisplay();
+  return;
+}
+
+if (next === "ん") {
+  pendingEndInfo = {
+    reason: "「ん」でおわりました"
+  };
+  updateDisplay();
+  return;
+}
+
+if (!hasAvailableMove(next)) {
+  pendingEndInfo = {
+    reason: "つづけられるパネルがなくなりました"
+  };
+  updateDisplay();
+  return;
+}
+
+  if (gameState.mode === "versus") {
+    gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+  }
+
+  updateDisplay();
+}
+
+function handleMiss(panel) {
+  updateDisplay();
+
+  setTimeout(() => {
+    showWrongMark(panel.id);
+  }, 0);
+
+  applyTimePenalty();
+}
+
+function handleMissByPanelId(panelId) {
+  updateDisplay();
+
+  setTimeout(() => {
+    showWrongMark(panelId);
+  }, 0);
+
+  applyTimePenalty();
+}
+
+function showWrongMark(panelId) {
+  const panelButton = document.querySelector(`[data-panel-id="${panelId}"]`);
+  if (!panelButton) return;
+
+  const existing = panelButton.querySelector(".wrong-mark");
+  if (existing) existing.remove();
+
+  const mark = document.createElement("div");
+  mark.className = "wrong-mark";
+  mark.textContent = "×";
+  panelButton.appendChild(mark);
+
+  setTimeout(() => {
+    mark.remove();
+  }, 500);
+}
+
+function showAnswerModal(word, isHidden, resultText = null) {
+  const modal = document.getElementById("answerModal");
+  const win = document.getElementById("answerWindow");
+  const answerWord = document.getElementById("answerWord");
+  const answerResult = document.getElementById("answerResult");
+
+  answerModalMode = "answer";
+
+  answerWord.textContent = `「${word}」`;
+
+  if (isHidden) {
+    win.className = "answer-window hidden";
+  } else {
+    win.className = "answer-window normal";
+  }
+
+  answerResult.className = "answer-result search-message";
+  answerResult.textContent = resultText ?? `つぎは「${gameState.currentChar}」から`;
+  answerResult.style.display = "block";
+
+  modal.classList.add("open");
+}
+
+function showEndReasonModal(reason) {
+  const modal = document.getElementById("answerModal");
+  const win = document.getElementById("answerWindow");
+  const answerWord = document.getElementById("answerWord");
+  const answerResult = document.getElementById("answerResult");
+
+  answerModalMode = "endReason";
+
+  win.className = "answer-window end";
+if (pendingEndInfo && pendingEndInfo.html) {
+  answerWord.innerHTML = reason;
+} else {
+  answerWord.textContent = reason;
+}
+  answerResult.className = "answer-result";
+  answerResult.textContent = "";
+  answerResult.style.display = "none";
+
+  modal.classList.add("open");
+}
+
+function showHintModal(message) {
+  const modal = document.getElementById("answerModal");
+  const win = document.getElementById("answerWindow");
+  const answerWord = document.getElementById("answerWord");
+  const answerResult = document.getElementById("answerResult");
+
+  answerModalMode = "hint";
+
+  win.className = "answer-window hint";
+  answerWord.textContent = message;
+  answerResult.className = "answer-result";
+  answerResult.textContent = "";
+  answerResult.style.display = "none";
+
+  modal.classList.add("open");
+}
+
+function hideAnswerModal() {
+  const modal = document.getElementById("answerModal");
+
+  if (pendingEndInfo && answerModalMode === "answer") {
+    showEndReasonModal(pendingEndInfo.reason);
+    return;
+  }
+
+  if (pendingEndInfo && answerModalMode === "endReason") {
+    pendingEndInfo = null;
+    answerModalMode = "answer";
+    modal.classList.remove("open");
+    endGame();
+    return;
+  }
+
+  modal.classList.remove("open");
+  answerModalMode = "answer";
+}
+
+function closeAnswerModalImmediately() {
+  const modal = document.getElementById("answerModal");
+  modal.classList.remove("open");
+  pendingEndInfo = null;
+  answerModalMode = "answer";
+}
+
+function endGame() {
+  stopTimerInterval();
+  gameState.gameOver = true;
+
+  document.getElementById("resultTitle").textContent = `つなげた数：${gameState.count}`;
+
+  const words = gameState.history.map(item => item.word).join(" → ");
+
+  document.getElementById("resultText").innerHTML =
+    `<div class="result-section-title">使った言葉</div>
+     <div class="word-history">${words}</div>`;
+
+  updateTimerDisplay();
+  updateLayoutFlags();
+  showScreen("resultScreen");
+}
+
+function hasAvailableMove(char) {
+  return activePanels.some(panel => {
+    if (gameState.usedPanelIds.includes(panel.id)) return false;
+    return panel.words.some(wordObj => getFirstChar(wordObj.text) === char);
+  });
+}
+
+function togglePanelLabels() {
+  showPanelLabel = !showPanelLabel;
+  updateDisplay();
+}
+
+function toggleTimeLimitMode() {
+  timeLimitMode = !timeLimitMode;
+  updateTimeLimitControls();
+}
+
+function toggleHintMode() {
+  hintMode = !hintMode;
+  updateModeControls();
+  updateLayoutFlags();
+}
+
+function updateModeControls() {
+  const hintButton = document.getElementById("hintModeButton");
+
+  if (hintButton) {
+    hintButton.textContent = hintMode ? "ヒントモード：ON" : "ヒントモード：OFF";
+  }
+}
+
+function updateTimeLimitSeconds() {
+  const input = document.getElementById("timeLimitInput");
+  if (!input) return;
+
+  let value = parseInt(input.value, 10);
+
+  if (Number.isNaN(value) || value < 1) {
+    value = 60;
+  }
+
+  if (value > 999) {
+    value = 999;
+  }
+
+  timeLimitSeconds = value;
+  input.value = value;
+}
+
+function updateTimeLimitControls() {
+  const button = document.getElementById("timeModeButton");
+  if (button) {
+    button.textContent = timeLimitMode ? "せいげんじかん：ON" : "せいげんじかん：OFF";
+  }
+}
+
+function startTimerInterval() {
+  stopTimerInterval();
+
+  timerIntervalId = setInterval(() => {
+    if (!shouldTimerTick()) return;
+
+    remainingTime--;
+    updateTimerDisplay();
+
+    if (remainingTime <= 0) {
+      triggerTimeUp();
+    }
+  }, 1000);
+}
+
+function stopTimerInterval() {
+  if (timerIntervalId !== null) {
+    clearInterval(timerIntervalId);
+    timerIntervalId = null;
+  }
+}
+
+function shouldTimerTick() {
+  const gameScreen = document.getElementById("gameScreen");
+
+  return (
+    timeLimitMode &&
+    gameScreen.classList.contains("active") &&
+    !gameState.gameOver &&
+    !gameState.rouletteRunning &&
+    !pendingEndInfo
+  );
+}
+
+function updateTimerDisplay() {
+  const timerBox = document.getElementById("timerBox");
+  const timerNumber = document.getElementById("timerNumber");
+  const gameScreen = document.getElementById("gameScreen");
+
+  if (!timerBox || !timerNumber || !gameScreen) return;
+
+  if (timeLimitMode && gameScreen.classList.contains("active")) {
+    timerBox.classList.add("open");
+    gameScreen.classList.add("time-on");
+  } else {
+    timerBox.classList.remove("open");
+    gameScreen.classList.remove("time-on");
+  }
+
+  timerNumber.textContent = Math.max(0, remainingTime);
+}
+
+function applyTimePenalty() {
+  if (!timeLimitMode || gameState.gameOver) return;
+
+  remainingTime = Math.max(0, remainingTime - 2);
+  updateTimerDisplay();
+
+  if (remainingTime <= 0) {
+    triggerTimeUp();
+  }
+}
+
+function triggerTimeUp() {
+  if (gameState.gameOver) return;
+
+  remainingTime = 0;
+  updateTimerDisplay();
+
+  pendingEndInfo = {
+    reason: "じかんぎれ！"
+  };
+
+  gameState.gameOver = true;
+  stopTimerInterval();
+  showEndReasonModal("じかんぎれ！");
+  updateDisplay();
+}
+
+function showHint() {
+  if (!hintMode) return;
+  if (gameState.gameOver) return;
+  if (gameState.rouletteRunning) return;
+
+  const hintWord = getHintWord();
+
+  if (hintWord) {
+    showHintModal(`さがすことばは「${hintWord}」です`);
+  } else {
+    showHintModal("ヒントはありません");
+  }
+}
+
+function getHintWord() {
+  const candidates = getHintCandidates();
+
+  if (candidates.length === 0) return null;
+
+  candidates.sort((a, b) => {
+    if (a.canContinue !== b.canContinue) {
+      return a.canContinue ? -1 : 1;
+    }
+
+    if (a.hidden !== b.hidden) {
+      return a.hidden ? 1 : -1;
+    }
+
+    return Number(a.panel.id) - Number(b.panel.id);
+  });
+
+  return candidates[0].word.text;
+}
+
+function getHintCandidates() {
+  if (!gameState.currentChar) return [];
+
+  const remainingPanels = activePanels
+    .filter(panel => !gameState.usedPanelIds.includes(panel.id))
+    .sort((a, b) => Number(a.id) - Number(b.id));
+
+  const candidates = [];
+
+  remainingPanels.forEach(panel => {
+    panel.words.forEach(wordObj => {
+      if (getFirstChar(wordObj.text) !== gameState.currentChar) return;
+
+      const nextChar = getLastChar(wordObj.text);
+      const canContinue = canContinueAfterUsing(panel.id, nextChar);
+
+      candidates.push({
+        panel,
+        word: wordObj,
+        hidden: wordObj.hidden,
+        canContinue
+      });
+    });
+  });
+
+  return candidates;
+}
+
+function canContinueAfterUsing(usedPanelId, nextChar) {
+  if (!nextChar || nextChar === "ん") return false;
+
+  return activePanels.some(panel => {
+    if (panel.id === usedPanelId) return false;
+    if (gameState.usedPanelIds.includes(panel.id)) return false;
+
+    return panel.words.some(wordObj => getFirstChar(wordObj.text) === nextChar);
+  });
+}
+
+function renderReadingList() {
+  const list = document.getElementById("readingList");
+  const chainDebug = document.getElementById("chainDebug");
+  if (!list || !chainDebug) return;
+
+  const chainText = answerChain.length > 0
+    ? answerChain.map(panel => getNormalWord(panel).text).join(" → ")
+    : "まだありません";
+
+  chainDebug.innerHTML =
+    `<strong>確認用：表読みだけのチェーン</strong><br>${chainText}`;
+
+  list.innerHTML = "";
+
+  activePanels.forEach(panel => {
+    const card = document.createElement("div");
+    card.className = "reading-card";
+
+    const used = gameState.usedPanelIds.includes(panel.id);
+    const selected = gameState.selectedPanelId === panel.id;
+
+    if (used) {
+      card.classList.add("used-reading");
+    }
+
+    if (selected) {
+      card.classList.add("selected-reading");
+    }
+
+    const title = document.createElement("div");
+    title.className = "reading-card-title";
+
+    title.innerHTML =
+      panel.id + "　" + panel.label +
+      (used ? `<span class="used-label">使用済み</span>` : "") +
+      (selected ? `<span class="selected-label">選択中</span>` : "");
+
+    card.appendChild(title);
+
+    const normalWords = panel.words
+      .filter(w => !w.hidden)
+      .map(w => `<span class="normal-word">${w.text}</span>`)
+      .join("／");
+
+    const hiddenWords = panel.words
+      .filter(w => w.hidden)
+      .map(w => `<span class="hidden-word">${w.text}</span>`)
+      .join("／");
+
+    const normalLine = document.createElement("div");
+    normalLine.className = "reading-line";
+    normalLine.innerHTML = `通常：${normalWords || "なし"}`;
+    card.appendChild(normalLine);
+
+    const hiddenLine = document.createElement("div");
+    hiddenLine.className = "reading-line";
+    hiddenLine.innerHTML = `裏読み：${hiddenWords || "なし"}`;
+    card.appendChild(hiddenLine);
+
+    list.appendChild(card);
+  });
+}
+
+function getFirstChar(word) {
+  return word.charAt(0);
+}
+
+function getLastChar(word) {
+  if (!word) return "";
+
+  let index = word.length - 1;
+  let char = word.charAt(index);
+
+  while (char === "ー" && index > 0) {
+    index--;
+    char = word.charAt(index);
+  }
+
+  return char;
+}
+
+function shuffle(array) {
+  const arr = [...array];
+
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+  }
+
+  return arr;
+}
+
+updateTimeLimitControls();
+updateModeControls();
+updateLayoutFlags();
+</script>
+
+</body>
+</html>
